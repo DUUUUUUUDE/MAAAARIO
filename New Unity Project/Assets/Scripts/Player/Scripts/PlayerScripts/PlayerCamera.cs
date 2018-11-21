@@ -28,6 +28,8 @@ public class PlayerCamera : MonoBehaviour {
     float l_Distance;
     Vector3 l_Direction;
 
+    Vector3 LastDistanceVector;
+
     private void Start()
     {
         _CharacterCamera = Camera.main;
@@ -36,41 +38,7 @@ public class PlayerCamera : MonoBehaviour {
 
     private void LateUpdate()
     {
-        //RotateCamera();
         MoveCamera();
-    }
-
-    void RotateCamera()
-    {
-        float mouseX = Input.GetAxis("Mouse X");
-        float mouseY = Input.GetAxis("Mouse Y");
-
-        float rotAmountX = mouseX * _MouseSensitivity;
-        float rotAmountY = mouseY * _MouseSensitivity;
-
-        _XAxisClamp -= rotAmountY;
-
-        Vector3 targetRotCam = _CharacterCamera.transform.rotation.eulerAngles;
-        Vector3 targetRotBody = transform.rotation.eulerAngles;
-
-        targetRotCam.x -= rotAmountY;
-        targetRotCam.z = 0;
-        targetRotBody.y += rotAmountX;
-
-        if (_XAxisClamp > 90)
-        {
-            _XAxisClamp = 90;
-            targetRotCam.x = 90;
-        }
-        else if (_XAxisClamp < -90)
-        {
-            _XAxisClamp = -90;
-            targetRotCam.x = 270;
-        }
-
-        _CharacterCamera.transform.rotation = Quaternion.Euler(new Vector3(targetRotCam.x, targetRotCam.y, transform.rotation.eulerAngles.z));
-        transform.rotation = Quaternion.Euler(new Vector3(targetRotBody.x, targetRotBody.y, transform.rotation.eulerAngles.z));
-
     }
 
     void MoveCamera()
@@ -87,7 +55,7 @@ public class PlayerCamera : MonoBehaviour {
 
         Vector3 l_DesiredPosition = transform.position;
 
-        if ((l_MouseAxisX > 0.01f || l_MouseAxisX < -0.01f || l_MouseAxisY > 0.01f || l_MouseAxisY < -0.01f))
+        if (!m_AngleLocked &&(l_MouseAxisX > 0.01f || l_MouseAxisX < -0.01f || l_MouseAxisY > 0.01f || l_MouseAxisY < -0.01f))
 
         {
 
@@ -115,23 +83,22 @@ public class PlayerCamera : MonoBehaviour {
 
             l_Direction = m_LookAt.position - l_DesiredPosition;
 
+
+            LastDistanceVector = transform.position - m_LookAt.position;
         }
         else
         {
-            
+            l_DesiredPosition = m_LookAt.position - l_Direction * LastDistanceVector.magnitude;
             l_Direction = m_LookAt.position - transform.position;
-
         }
 
-        l_Direction /= l_Distance;
+
+        l_Direction = l_Direction.normalized;
 
 
         if (l_Distance > m_DistanceToLookAt)
-
         {
-
             l_DesiredPosition = m_LookAt.position - l_Direction * m_DistanceToLookAt;
-
             l_Distance = m_DistanceToLookAt;
 
         }
