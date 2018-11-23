@@ -10,8 +10,8 @@ public class PlayerInput : MonoBehaviour {
     Vector3 GetForwardMovement()
     {
 
-        Vector3 l_Forward = Camera.main.transform.forward;
-        Vector3 l_Right = Camera.main.transform.right;
+        Vector3 l_Forward = Camera.main.transform.forward.normalized;
+        Vector3 l_Right = Camera.main.transform.right.normalized;
 
         l_Forward *= Input.GetAxis("Vertical");
         l_Right *= Input.GetAxis("Horizontal");
