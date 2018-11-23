@@ -41,7 +41,7 @@ public class PlayerInput : MonoBehaviour {
         // JUMP START
         if (Input.GetButtonDown("Jump"))
         {
-            PlayerManager._PlayerManager._playerMovement.StartJump();
+            PlayerManager._PlayerManager._playerMovement.CheckJump();
         }
         // JUMP END
         if (Input.GetButtonUp("Jump"))

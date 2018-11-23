@@ -48,6 +48,8 @@ public class PlayerMovement : MonoBehaviour {
     protected float     _VerticalAxis;
     protected float     _HorizontalAxis;
     CharacterController _CharacterController;
+    protected int       _JumpNUM;
+    public bool         _OnWall;
     #endregion
 
     protected void Start()
@@ -73,25 +75,8 @@ public class PlayerMovement : MonoBehaviour {
         _MoveSpeed = _RunMoveSpeed;
     }
 
-    public virtual void StartJump()
-    {
-        if (CanJump)    //Jump
-        {
-            _Velocity.y = _MaxJumpVelocity;
-            CanJump = false;
-            //Slope
-            if (OnSlope)
-                OnSlope = false;
-        }
-    }
-    //JUMP END
-    public virtual void EndJump()
-    {
-        if (_Velocity.y > _MinJumpVelocity)
-        {
-            _Velocity.y = _MinJumpVelocity;
-        }
-    }
+   
+
 
     public void SetMoveDirection(Vector3 Direction)
     {
@@ -120,7 +105,10 @@ public class PlayerMovement : MonoBehaviour {
         // setup velocity
         _Velocity.x = Mathf.SmoothDamp(_Velocity.x, targetVelocityX, ref _VelocityGroundSmoothingX, (_CharacterController.isGrounded) ? _ChangeDirectionTimeGround : _ChangeDirectionTimeAir);
         _Velocity.z = Mathf.SmoothDamp(_Velocity.z, targetVelocityZ, ref _VelocityGroundSmoothingZ, (_CharacterController.isGrounded) ? _ChangeDirectionTimeGround : _ChangeDirectionTimeAir);
-        _Velocity.y += _Gravity * Time.deltaTime;
+        if (_OnWall && _Velocity.y > 0)
+            _Velocity.y += _Gravity / 3 * Time.deltaTime;
+        else
+            _Velocity.y += _Gravity * Time.deltaTime;
 
 
         //move
@@ -135,6 +123,7 @@ public class PlayerMovement : MonoBehaviour {
             {
                 LateGrounded = true;
                 ChecKSlope();
+                StartJumpTimer();
             }
 
             _Velocity.y = 0;
@@ -152,7 +141,138 @@ public class PlayerMovement : MonoBehaviour {
     }
 
 
+
+    #region JUMP
+    public void CheckJump()
+    {
+
+        if (CanJump)
+        {
+            if (_OnWall)
+            {
+                StartJump0();
+                Vector3 WallNormal = CheckWallNormal ();
+                _Velocity.x = WallNormal.x * 10;
+                _Velocity.x = WallNormal.z * 10;
+
+                return;
+            }
+
+            if (onJumpCombo)
+            {
+                if (_JumpNUM == 1)
+                    StartJump1();
+                else if (_JumpNUM == 2)
+                    StartJump2();
+                else if (_JumpNUM == 3)
+                    StartJump0();
+            }
+            else
+            {
+                StartJump0();
+            }
+        }
+    }
+
+
+    void StartJump0()
+    {
+        _Velocity.y = _MaxJumpVelocity;
+        CanJump = false;
+        //Slope
+        if (OnSlope)
+            OnSlope = false;
+
+        _JumpNUM = 1;
+    }
+    void StartJump1()
+    {
+        _Velocity.y = _MaxJumpVelocity * 1.5f;
+        CanJump = false;
+        //Slope
+        if (OnSlope)
+            OnSlope = false;
+        _JumpNUM++;
+    }
+    void StartJump2()
+    {
+        _Velocity.y = _MaxJumpVelocity * 2.5f;
+        CanJump = false;
+        //Slope
+        if (OnSlope)
+            OnSlope = false;
+        _JumpNUM++;
+    }
+    //JUMP END
+    public virtual void EndJump()
+    {
+        if (_Velocity.y > _MinJumpVelocity)
+        {
+            _Velocity.y = _MinJumpVelocity;
+        }
+    }
+
+    void StartJumpTimer ()
+    {
+        if (!onJumpCombo)
+            JumpCoroutine = StartCoroutine(WaitForComboCO());
+    }
+
+    bool onJumpCombo;
+    Coroutine JumpCoroutine;
+    IEnumerator WaitForComboCO ()
+    {
+        onJumpCombo = true;
+        yield return new WaitForSeconds(0.1f);
+        onJumpCombo = false;
+    }
     
+
+    //WALL JUMP
+    Vector3 RandomCircle(Vector3 center, float radius, int a)
+    {
+
+        float ang = a;
+        Vector3 pos;
+        pos.x = center.x + radius * Mathf.Sin(ang * Mathf.Deg2Rad);
+        pos.z = center.z + radius * Mathf.Cos(ang * Mathf.Deg2Rad);
+        pos.y = center.y;
+        return pos;
+    }
+    int rayNum = 8;
+    float rayLenght = 0.6f;
+    Vector3 CheckWallNormal ()
+    {
+        Vector3 center = Camera.main.transform.position;
+        for (int i = 0; i < rayNum; i++)
+        {
+            int a = i * 30;
+            Vector3 pos = RandomCircle(center, 1.0f, a);
+
+            RaycastHit hit;
+            Ray ray = new Ray(center, pos - center);
+
+            if (Physics.Raycast(ray, out hit, rayLenght))
+            {
+                return hit.normal;
+            }
+        }
+
+        return Vector3.zero;
+    }
+    private void OnTriggerEnter(Collider other)
+    {
+        Debug.Log(other.tag);
+        if (other.tag == "Map")
+            _OnWall = true;
+    }
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.tag == "Map")
+            _OnWall = false;
+    }
+    #endregion
+
 
     #region SLOPES
     void ChecKSlope()

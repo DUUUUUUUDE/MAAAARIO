@@ -29,13 +29,16 @@ public class PlayerCamera : MonoBehaviour {
     Vector3 l_Direction;
 
     Vector3 LastDistanceVector;
+    Vector3 LastDirectionVector;
 
     private void Start()
     {
         _CharacterCamera = Camera.main;
         l_Distance = m_DistanceToLookAt;
         l_Direction = m_LookAt.position - transform.position;
+        LastDistanceVector = l_Direction;
         l_Direction = l_Direction.normalized;
+        LastDirectionVector = l_Direction;
     }
 
     private void LateUpdate()
@@ -86,6 +89,7 @@ public class PlayerCamera : MonoBehaviour {
             l_Direction = m_LookAt.position - l_DesiredPosition;
 
 
+            LastDirectionVector = l_Direction.normalized;
             LastDistanceVector = transform.position - m_LookAt.position;
         }
         else
@@ -93,6 +97,7 @@ public class PlayerCamera : MonoBehaviour {
 
             l_Direction = m_LookAt.position - transform.position;
             l_Direction = l_Direction.normalized;
+            l_Direction.y = LastDirectionVector.y;
             l_DesiredPosition = m_LookAt.position - l_Direction * LastDistanceVector.magnitude;
         }
 
