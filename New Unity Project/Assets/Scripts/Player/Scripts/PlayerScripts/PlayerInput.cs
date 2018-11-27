@@ -31,33 +31,38 @@ public class PlayerInput : MonoBehaviour {
         if (Input.GetKeyDown(KeyCode.Escape))
             Application.Quit();
 
+        if (Input.GetKeyDown(KeyCode.Mouse0))
+        {
+            PlayerManager.instace._Movement.CheckPunch();
+        }
+
         #region MOVEMENT
 
         //MOVEMENT VECTOR
         _MovementForward = GetForwardMovement();
         //2D MOVEMENT
-        PlayerManager._PlayerManager._playerMovement.SetMoveDirection(_MovementForward);
+        PlayerManager.instace._Movement.SetMoveDirection(_MovementForward);
 
         // JUMP START
         if (Input.GetButtonDown("Jump"))
         {
-            PlayerManager._PlayerManager._playerMovement.CheckJump();
+            PlayerManager.instace._Movement.CheckJump();
         }
         // JUMP END
         if (Input.GetButtonUp("Jump"))
         {
-            PlayerManager._PlayerManager._playerMovement.EndJump();
+            PlayerManager.instace._Movement.EndJump();
         }
 
         //RUN START
         if (Input.GetButtonDown("Fire3"))
         {
-            PlayerManager._PlayerManager._playerMovement.Run();
+            PlayerManager.instace._Movement.Run();
         }
         //RUN END
         if (Input.GetButtonUp("Fire3"))
         {
-            PlayerManager._PlayerManager._playerMovement.Walk();
+            PlayerManager.instace._Movement.Walk();
         }
 
         #endregion

@@ -49,8 +49,10 @@ public class PlayerMovement : MonoBehaviour {
     protected float     _HorizontalAxis;
     CharacterController _CharacterController;
     protected int       _JumpNUM;
-    public bool         _OnWall;
+    protected bool      _OnWall;
     #endregion
+
+    public GameObject PunchCol;
 
     protected void Start()
     {
@@ -102,10 +104,13 @@ public class PlayerMovement : MonoBehaviour {
         targetVelocityX = _Move.x * _MoveSpeed;
         targetVelocityZ = _Move.z * _MoveSpeed;
 
+        if (_Move.magnitude > 0)
+        transform.forward = _Move;
+
         // setup velocity
         _Velocity.x = Mathf.SmoothDamp(_Velocity.x, targetVelocityX, ref _VelocityGroundSmoothingX, (_CharacterController.isGrounded) ? _ChangeDirectionTimeGround : _ChangeDirectionTimeAir);
         _Velocity.z = Mathf.SmoothDamp(_Velocity.z, targetVelocityZ, ref _VelocityGroundSmoothingZ, (_CharacterController.isGrounded) ? _ChangeDirectionTimeGround : _ChangeDirectionTimeAir);
-        if (_OnWall && _Velocity.y > 0)
+        if (_OnWall && _Velocity.y < 0)
             _Velocity.y += _Gravity / 3 * Time.deltaTime;
         else
             _Velocity.y += _Gravity * Time.deltaTime;
@@ -129,9 +134,28 @@ public class PlayerMovement : MonoBehaviour {
             _Velocity.y = 0;
             CanJump = true;
 
+            if (_Velocity.magnitude < 0)
+            {
+                PlayerManager.instace.ChangeState(PlayerManager.States.Idle);
+            }
+            else
+            {
+                if (_MoveSpeed == _NormalMoveSpeed)
+                {
+                    PlayerManager.instace.ChangeState(PlayerManager.States.Walk);
+                }
+                else
+                {
+                    PlayerManager.instace.ChangeState(PlayerManager.States.Run);
+                }
+            }
+
         }
         else
         {
+            if (_Velocity.y < 0)
+                PlayerManager.instace.ChangeState(PlayerManager.States.Fall);
+
             //Slope
             if (LateGrounded)
                 LateGrounded = false;
@@ -140,35 +164,126 @@ public class PlayerMovement : MonoBehaviour {
         }
     }
 
+    #region PUNCH
+
+    int punchNum = 0;
+    public void CheckPunch ()
+    {
+        if (!onPunch)
+        {
+            StartCoroutine(PunchCDCO());
+
+            if (onPunchCombo)
+            {
+                if (punchNum == 1)
+                {
+                    PlayerManager.instace.ChangeState(PlayerManager.States.Punch1);
+                    Punch1();
+                    return;
+                }
+                else if (punchNum == 2)
+                {
+                    PlayerManager.instace.ChangeState(PlayerManager.States.Punch2);
+                    Punch2();
+                    return;
+                }
+                else if (punchNum == 3)
+                {
+                    PlayerManager.instace.ChangeState(PlayerManager.States.Punch3);
+                    Punch0();
+                    return;
+                }
+            }
+            else
+            {
+                Punch0();
+            }
+        }
+    }
+
+    void Punch0 ()
+    {
+        punchNum = 1;
+        PunchCol.SetActive(true);
+    }
+
+    void Punch1()
+    {
+        punchNum++;
+        PunchCol.SetActive(true);
+    }
+
+    void Punch2()
+    {
+        punchNum++;
+        PunchCol.SetActive(true);
+    }
+
+
+    bool onPunchCombo;
+    IEnumerator WaitForPunchComboCO()
+    {
+        onPunchCombo = true;
+        yield return new WaitForSeconds(0.2f);
+        onPunchCombo = false;
+    }
+
+    bool onPunch;
+    IEnumerator PunchCDCO()
+    {
+        onPunch = true;
+        yield return new WaitForSeconds(0.5f);
+        onPunch = false;
+
+        StartCoroutine(WaitForPunchComboCO());
+    }
+
+    #endregion
+
+
+
 
 
     #region JUMP
     public void CheckJump()
     {
 
+        if (_OnWall)
+        {
+            StartJump1();
+            _JumpNUM = 1;
+            Vector3 WallNormal = CheckWallNormal();
+            _Velocity.x = WallNormal.x * 10;
+            _Velocity.z = WallNormal.z * 10;
+
+            PlayerManager.instace.ChangeState(PlayerManager.States.Jump_Wall);
+
+            return;
+        }
+
         if (CanJump)
         {
-            if (_OnWall)
-            {
-                StartJump0();
-                Vector3 WallNormal = CheckWallNormal ();
-                _Velocity.x = WallNormal.x * 10;
-                _Velocity.x = WallNormal.z * 10;
-
-                return;
-            }
-
             if (onJumpCombo)
             {
                 if (_JumpNUM == 1)
+                {
+                    PlayerManager.instace.ChangeState(PlayerManager.States.Jump_Double);
                     StartJump1();
+                }
                 else if (_JumpNUM == 2)
+                {
+                    PlayerManager.instace.ChangeState(PlayerManager.States.Jump_Triple);
                     StartJump2();
+                }
                 else if (_JumpNUM == 3)
+                {
+                    PlayerManager.instace.ChangeState(PlayerManager.States.Jump);
                     StartJump0();
+                }
             }
             else
             {
+                PlayerManager.instace.ChangeState(PlayerManager.States.Jump);
                 StartJump0();
             }
         }
@@ -215,12 +330,12 @@ public class PlayerMovement : MonoBehaviour {
     void StartJumpTimer ()
     {
         if (!onJumpCombo)
-            JumpCoroutine = StartCoroutine(WaitForComboCO());
+            JumpCoroutine = StartCoroutine(WaitForJumpComboCO());
     }
 
     bool onJumpCombo;
     Coroutine JumpCoroutine;
-    IEnumerator WaitForComboCO ()
+    IEnumerator WaitForJumpComboCO ()
     {
         onJumpCombo = true;
         yield return new WaitForSeconds(0.1f);
@@ -239,20 +354,23 @@ public class PlayerMovement : MonoBehaviour {
         pos.y = center.y;
         return pos;
     }
+
     int rayNum = 8;
-    float rayLenght = 0.6f;
+    float rayLenght = 1;
+    public LayerMask walljumpLayer;
     Vector3 CheckWallNormal ()
     {
-        Vector3 center = Camera.main.transform.position;
+        Vector3 center = transform.position;
+        int angle = 360 / rayNum;
         for (int i = 0; i < rayNum; i++)
         {
-            int a = i * 30;
+            int a = i * angle;
             Vector3 pos = RandomCircle(center, 1.0f, a);
 
             RaycastHit hit;
             Ray ray = new Ray(center, pos - center);
 
-            if (Physics.Raycast(ray, out hit, rayLenght))
+            if (Physics.Raycast(ray, out hit, rayLenght, walljumpLayer))
             {
                 return hit.normal;
             }
@@ -262,7 +380,6 @@ public class PlayerMovement : MonoBehaviour {
     }
     private void OnTriggerEnter(Collider other)
     {
-        Debug.Log(other.tag);
         if (other.tag == "Map")
             _OnWall = true;
     }

@@ -61,10 +61,17 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Scripts\GameManager.cs" />
+    <Compile Include="Assets\Scripts\GoombaScript.cs" />
+    <Compile Include="Assets\Scripts\PickUpCoin.cs" />
+    <Compile Include="Assets\Scripts\PickUpLife.cs" />
+    <Compile Include="Assets\Scripts\PickUpOBJ.cs" />
     <Compile Include="Assets\Scripts\Player\Scripts\PlayerScripts\PlayerCamera.cs" />
     <Compile Include="Assets\Scripts\Player\Scripts\PlayerScripts\PlayerInput.cs" />
     <Compile Include="Assets\Scripts\Player\Scripts\PlayerScripts\PlayerManager.cs" />
     <Compile Include="Assets\Scripts\Player\Scripts\PlayerScripts\PlayerMovement.cs" />
+    <Compile Include="Assets\Scripts\Player\Scripts\PlayerScripts\PlayerUI.cs" />
+    <Compile Include="Assets\Scripts\Player\Scripts\PlayerScripts\PunchCollider.cs" />
     <None Include="Assets\Mario Assets\Models\Shaders\RimSpecular.shader" />
     <None Include="Assets\Mario Assets\Models\Shaders\RimReflect.shader" />
     <None Include="Assets\Mario Assets\Models\Shaders\RimIllumSpecular.shader" />
