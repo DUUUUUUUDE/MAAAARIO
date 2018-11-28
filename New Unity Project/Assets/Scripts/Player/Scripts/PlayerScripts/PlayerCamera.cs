@@ -21,6 +21,7 @@ public class PlayerCamera : MonoBehaviour {
     public Transform m_LookAt;
 
     public float m_DistanceToLookAt;
+    public float m_MinDistanceToLookAt;
 
     public LayerMask m_RaycastLayerMask;
     public float m_OffsetOnCollision;
@@ -28,7 +29,6 @@ public class PlayerCamera : MonoBehaviour {
     float l_Distance;
     Vector3 l_Direction;
 
-    Vector3 LastDistanceVector;
     Vector3 LastDirectionVector;
 
     private void Start()
@@ -36,7 +36,6 @@ public class PlayerCamera : MonoBehaviour {
         _CharacterCamera = Camera.main;
         l_Distance = m_DistanceToLookAt;
         l_Direction = m_LookAt.position - transform.position;
-        LastDistanceVector = l_Direction;
         l_Direction = l_Direction.normalized;
         LastDirectionVector = l_Direction;
     }
@@ -88,9 +87,7 @@ public class PlayerCamera : MonoBehaviour {
 
             l_Direction = m_LookAt.position - l_DesiredPosition;
 
-
             LastDirectionVector = l_Direction.normalized;
-            LastDistanceVector = transform.position - m_LookAt.position;
         }
         else
         {
@@ -98,17 +95,29 @@ public class PlayerCamera : MonoBehaviour {
             l_Direction = m_LookAt.position - transform.position;
             l_Direction = l_Direction.normalized;
             l_Direction.y = LastDirectionVector.y;
-            l_DesiredPosition = m_LookAt.position - l_Direction * LastDistanceVector.magnitude;
+
+            l_DesiredPosition = transform.position;
+
         }
 
 
-        l_Direction = l_Direction.normalized;
+        l_Direction = m_LookAt.position - l_DesiredPosition;
+        l_Direction.Normalize();
+
+        l_Distance = (transform.position - m_LookAt.position).magnitude;
 
 
         if (l_Distance > m_DistanceToLookAt)
         {
+            if (l_Direction.y > 0.1)
+
             l_DesiredPosition = m_LookAt.position - l_Direction * m_DistanceToLookAt;
-            l_Distance = m_DistanceToLookAt;
+
+        }
+        else if (l_Distance < m_MinDistanceToLookAt)
+        {
+
+            l_DesiredPosition = m_LookAt.position - l_Direction * m_MinDistanceToLookAt;
 
         }
 
