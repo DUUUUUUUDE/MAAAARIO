@@ -8,13 +8,10 @@ public class PickUpLife : PickUpOBJ
     public override void PickUp()
     {
 
-        if (PlayerManager.instace.HP < PlayerManager.instace.MaxHP)
+        if (PlayerManager.instace.Lifes < 2)
         {
-            PlayerManager.instace.HP += 1;
-            if (PlayerManager.instace.HP > PlayerManager.instace.MaxHP)
-            {
-                PlayerManager.instace.HP = PlayerManager.instace.MaxHP;
-            }
+            PlayerManager.instace.Lifes++;
+            PlayerManager.instace.HP = PlayerManager.instace.MaxHP;
         }
         else
         {

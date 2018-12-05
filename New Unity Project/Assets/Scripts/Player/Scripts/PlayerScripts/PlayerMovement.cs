@@ -104,6 +104,9 @@ public class PlayerMovement : MonoBehaviour {
         targetVelocityX = _Move.x * _MoveSpeed;
         targetVelocityZ = _Move.z * _MoveSpeed;
 
+        if (_OnWall && !_CharacterController.isGrounded)
+            _Move = Vector3.zero;
+
         if (_Move.magnitude > 0)
         transform.forward = _Move;
 
@@ -114,7 +117,12 @@ public class PlayerMovement : MonoBehaviour {
             _Velocity.y += _Gravity / 3 * Time.deltaTime;
         else
             _Velocity.y += _Gravity * Time.deltaTime;
+        
 
+        if (_Velocity.y < -2)
+        {
+            PlayerManager.instace.animator.SetBool("Grounded", false);
+        }
 
         //move
         _CharacterController.Move(_Velocity * Time.deltaTime);
@@ -124,6 +132,7 @@ public class PlayerMovement : MonoBehaviour {
         // reset fall
         if ((_CharacterController.isGrounded))
         {
+            PlayerManager.instace.animator.SetBool("Grounded",true);
             if (!LateGrounded)
             {
                 LateGrounded = true;
@@ -158,7 +167,9 @@ public class PlayerMovement : MonoBehaviour {
 
             //Slope
             if (LateGrounded)
+            {
                 LateGrounded = false;
+            }
             if (OnSlope)
                 DescendingSlope();
         }
@@ -177,25 +188,28 @@ public class PlayerMovement : MonoBehaviour {
             {
                 if (punchNum == 1)
                 {
-                    PlayerManager.instace.ChangeState(PlayerManager.States.Punch1);
+                    PlayerManager.instace.animator.SetTrigger ("Punch1");
                     Punch1();
                     return;
                 }
                 else if (punchNum == 2)
                 {
-                    PlayerManager.instace.ChangeState(PlayerManager.States.Punch2);
+                    PlayerManager.instace.animator.SetTrigger("Punch2");
+
                     Punch2();
                     return;
                 }
                 else if (punchNum == 3)
                 {
-                    PlayerManager.instace.ChangeState(PlayerManager.States.Punch3);
+                    PlayerManager.instace.animator.SetTrigger("Punch3");
+
                     Punch0();
                     return;
                 }
             }
             else
             {
+                PlayerManager.instace.animator.SetTrigger ("Punch1");
                 Punch0();
             }
         }
@@ -224,7 +238,7 @@ public class PlayerMovement : MonoBehaviour {
     IEnumerator WaitForPunchComboCO()
     {
         onPunchCombo = true;
-        yield return new WaitForSeconds(0.2f);
+        yield return new WaitForSeconds(0.5f);
         onPunchCombo = false;
     }
 
@@ -232,7 +246,7 @@ public class PlayerMovement : MonoBehaviour {
     IEnumerator PunchCDCO()
     {
         onPunch = true;
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(0.75f);
         onPunch = false;
 
         StartCoroutine(WaitForPunchComboCO());
@@ -248,21 +262,25 @@ public class PlayerMovement : MonoBehaviour {
     public void CheckJump()
     {
 
-        if (_OnWall)
+        if (_MoveSpeed == _RunMoveSpeed && CanJump && !onJumpCombo)
         {
-            StartJump1();
-            _JumpNUM = 1;
-            Vector3 WallNormal = CheckWallNormal();
-            _Velocity.x = WallNormal.x * 10;
-            _Velocity.z = WallNormal.z * 10;
 
-            PlayerManager.instace.ChangeState(PlayerManager.States.Jump_Wall);
+            PlayerManager.instace.ChangeState(PlayerManager.States.Jump_Long);
+            _Velocity *= 3;
+            _Velocity.y = _MaxJumpVelocity * 2;
+
+            CanJump = false;
+            //Slope
+            if (OnSlope)
+                OnSlope = false;
 
             return;
         }
 
         if (CanJump)
         {
+            Debug.Log(onJumpCombo);
+
             if (onJumpCombo)
             {
                 if (_JumpNUM == 1)
@@ -286,7 +304,27 @@ public class PlayerMovement : MonoBehaviour {
                 PlayerManager.instace.ChangeState(PlayerManager.States.Jump);
                 StartJump0();
             }
+            return;
+
         }
+
+        if (_OnWall)
+        {
+            StartJump1();
+            _JumpNUM = 1;
+            Vector3 WallNormal = CheckWallNormal();
+            _Velocity.x = WallNormal.x * 10;
+            _Velocity.z = WallNormal.z * 10;
+
+            PlayerManager.instace.ChangeState(PlayerManager.States.Jump_Wall);
+
+            CanJump = false;
+            if (OnSlope)
+                OnSlope = false;
+
+        }
+
+       
     }
 
 
@@ -341,7 +379,7 @@ public class PlayerMovement : MonoBehaviour {
         yield return new WaitForSeconds(0.1f);
         onJumpCombo = false;
     }
-    
+
 
     //WALL JUMP
     Vector3 RandomCircle(Vector3 center, float radius, int a)
@@ -378,6 +416,7 @@ public class PlayerMovement : MonoBehaviour {
 
         return Vector3.zero;
     }
+
     private void OnTriggerEnter(Collider other)
     {
         if (other.tag == "Map")
@@ -418,4 +457,6 @@ public class PlayerMovement : MonoBehaviour {
         }
     }
     #endregion
+
+
 }

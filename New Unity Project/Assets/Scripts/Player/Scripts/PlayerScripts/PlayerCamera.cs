@@ -104,13 +104,22 @@ public class PlayerCamera : MonoBehaviour {
         l_Direction = m_LookAt.position - l_DesiredPosition;
         l_Direction.Normalize();
 
-        l_Distance = (transform.position - m_LookAt.position).magnitude;
+       
+        RaycastHit l_RaycastHit;
+
+        Ray l_Ray = new Ray(m_LookAt.position, -l_Direction);
+
+        if (Physics.Raycast(l_Ray, out l_RaycastHit, l_Distance, m_RaycastLayerMask.value))
+            l_DesiredPosition = l_RaycastHit.point + l_Direction * m_OffsetOnCollision;
+
+
+
+        l_Distance = (l_DesiredPosition - m_LookAt.position).magnitude;
+
 
 
         if (l_Distance > m_DistanceToLookAt)
         {
-            if (l_Direction.y > 0.1)
-
             l_DesiredPosition = m_LookAt.position - l_Direction * m_DistanceToLookAt;
 
         }
@@ -120,16 +129,6 @@ public class PlayerCamera : MonoBehaviour {
             l_DesiredPosition = m_LookAt.position - l_Direction * m_MinDistanceToLookAt;
 
         }
-
-
-
-        RaycastHit l_RaycastHit;
-
-        Ray l_Ray = new Ray(m_LookAt.position, -l_Direction);
-
-        if (Physics.Raycast(l_Ray, out l_RaycastHit, l_Distance, m_RaycastLayerMask.value))
-
-            l_DesiredPosition = l_RaycastHit.point + l_Direction * m_OffsetOnCollision;
 
         transform.forward = l_Direction;
 

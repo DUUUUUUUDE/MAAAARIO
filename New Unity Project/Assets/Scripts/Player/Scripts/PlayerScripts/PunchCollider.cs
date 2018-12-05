@@ -7,7 +7,6 @@ public class PunchCollider : MonoBehaviour {
     private void OnEnable()
     {
         StartCoroutine(disapearCO());
-        Debug.Log("x");
     }
 
     IEnumerator disapearCO ()

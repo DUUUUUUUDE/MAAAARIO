@@ -27,6 +27,8 @@ public class GoombaScript : MonoBehaviour , IRestartGameElement
         patrolPoint = PatrolPos[0].position;
         ChangeState(state.patrol);
 
+        dead = false;
+
         gameObject.SetActive(true);
     }
 
